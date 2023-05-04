@@ -34,6 +34,43 @@ export async function uploadFile(filepath, filename) {
   });
 }
 
+/**
+ * Downloads a file from MongoDB
+ * @param {*} fileId 
+ */
+export async function downloadFile(fileId, res) {
+  // Connect to MongoDB
+  const client = await mongodb.MongoClient.connect(MONGO_URI);
+  const db = client.db();
+
+  // Initialize a GridFS bucket object
+  const bucket = new mongodb.GridFSBucket(db);
+
+  // Create a read stream for the file you want to download
+  const downloadStream = bucket.openDownloadStream(new mongodb.ObjectId(fileId));
+  
+  const timestamp = new Date().getTime();
+
+  if (res) {
+    res.attachment(`${timestamp}.mp3`);
+    downloadStream.pipe(res);
+    return;
+  }
+
+  // Create a write stream to save the downloaded file
+  const writeStream = fs.createWriteStream(`./downloads/${timestamp}.mp3`);
+
+  // Pipe the download stream into the write stream
+  downloadStream.pipe(writeStream);
+
+  // Wait for the download to finish
+  writeStream.on('finish', () => {
+    console.log('File downloaded!');
+    client.close();
+  });
+}
+
+
 export async function connectDB() {
   try {
     const conn = await mongoose.connect(MONGO_URI);

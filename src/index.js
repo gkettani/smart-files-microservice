@@ -1,8 +1,8 @@
 import fs from "fs";
 import express from "express";
-import { uploadFile, connectDB } from "./lib/mongodb.js";
+import { uploadFile, downloadFile, connectDB } from "./lib/mongodb.js";
 import upload from "./middlewares/fileUpload.js";
-import { fileService } from "./api/Service.js";
+import FileService from "./api/Service.js";
 
 connectDB();
 
@@ -16,7 +16,7 @@ app.use(express.json());
 app.post("/create-example", (req, res) => {
   const filename = req.body.filename;
   // Create a new file
-  fileService.create(filename);
+  FileService.create(filename);
   res.send("File created successfully");
 });
 
@@ -25,9 +25,8 @@ app.post("/create-example", (req, res) => {
  * @desc Example route
  */
 app.get("/", async (req, res) => {
-  const files = await fileService.list();
+  const files = await FileService.list();
   console.log(files);
-  // res.send("Hello World");
   res.json(files);
 });
 
@@ -55,6 +54,15 @@ app.post("/upload", upload.single("file"), (req, res) => {
         }
       });
     });
+});
+
+/**
+ * @route get /download/:id
+ * @desc Download file from DB
+ */
+app.get("/download/:id", async (req, res) => {
+  const fileId = req.params.id;
+  await downloadFile(fileId, res);
 });
 
 const PORT = process.env.PORT || 3000;

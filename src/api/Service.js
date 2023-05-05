@@ -1,8 +1,13 @@
 import File from './Model.js';
 
-function create(name) {
-  const file = new File({ name });
-  return file.save();
+async function create({ name, transcript, fs_file, mimetype }) {
+  const file = new File({ name, transcript, fs_file, mimetype });
+  const newfile = await file.save();
+  return newfile;
+}
+
+function read(id) {
+  return File.findById(id);
 }
 
 function list() {
@@ -12,4 +17,5 @@ function list() {
 export default {
   create,
   list,
+  read,
 };

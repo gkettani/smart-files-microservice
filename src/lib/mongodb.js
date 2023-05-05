@@ -2,8 +2,7 @@ import fs from 'fs';
 import mongodb from 'mongodb';
 import mongoose from 'mongoose';
 
-const { MONGO_HOST, MONGO_PORT, MONGO_DB } = process.env;
-const MONGO_URI = `mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}`;
+const MONGO_URI = process.env.MONGO_URI;
 
 /**
  *  Uploads a file to MongoDB

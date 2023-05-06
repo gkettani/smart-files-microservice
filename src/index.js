@@ -4,6 +4,7 @@ import { uploadFile, downloadFile, connectDB } from "./lib/mongodb.js";
 import upload from "./middlewares/fileUpload.js";
 import FileService from "./api/Service.js";
 import QueueService from "./lib/rabbitmq.js";
+import config from "./config/config.js";
 
 connectDB();
 
@@ -111,7 +112,7 @@ app.get("/:id", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const { PORT } = config;
 
 app.listen(PORT, () => {
   console.log("Server started on port 3000");

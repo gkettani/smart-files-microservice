@@ -1,8 +1,9 @@
 import fs from 'fs';
 import mongodb from 'mongodb';
 import mongoose from 'mongoose';
+import config from '../config/config.js';
 
-const MONGO_URI = process.env.MONGO_URI;
+const { MONGO_URI } = config;
 
 /**
  *  Uploads a file to MongoDB

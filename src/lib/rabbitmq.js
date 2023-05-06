@@ -1,13 +1,13 @@
 import amqp from 'amqplib';
+import config from '../config/config.js';
 
-const QUEUE_NAME = process.env.RABBITMQ_QUEUE;
-const QUEUE_URI = process.env.RABBITMQ_URI;
+const { RABBITMQ_URI, RABBITMQ_QUEUE } = config;
 
 async function connect() {
   try {
-    const connection = await amqp.connect(QUEUE_URI);
+    const connection = await amqp.connect(RABBITMQ_URI);
     const channel = await connection.createChannel();
-    await channel.assertQueue(QUEUE_NAME, {
+    await channel.assertQueue(RABBITMQ_QUEUE, {
       durable: false
     });
     return channel;
@@ -24,8 +24,8 @@ export async function QueueService() {
   return {
     sendToQueue: async (message) => {
       try {
-        channel.sendToQueue(QUEUE_NAME, Buffer.from(message));
-        console.log(`Message sent to ${QUEUE_NAME}`);
+        channel.sendToQueue(RABBITMQ_QUEUE, Buffer.from(message));
+        console.log(`Message sent to ${RABBITMQ_QUEUE}`);
       } catch (error) {
         console.error(error);
       }

@@ -29,7 +29,7 @@ app.get("/", async (req, res) => {
     const files = await FileService.list();
     res.status(200).json(files);
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     res.status(500).send("Error listing files");
   }
 });
@@ -53,7 +53,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     res.status(201).json(file);
   } catch (error) {
     console.log(error);
-    res.send("Error uploading file");
+    res.status(500).send("Error uploading file");
   } finally {
     // Delete the file from the uploads folder
     fs.unlink(filepath, (err) => {
@@ -80,11 +80,16 @@ app.get("/download/:id", async (req, res) => {
 
 /**
  * @desc Send notification to transcription service
- * @param {string} id - The id of the fs.file to transcribe
+ * @param {string} id - The id of the file to transcribe
  */
 app.post("/transcribe/:id", async (req, res) => {
   try {
-    await QueueService.sendToQueue(req.params.id);
+    const file = await FileService.read(req.params.id);
+    if (!file) {
+      res.status(404).send("File not found");
+      return;
+    }
+    await QueueService.sendToQueue(file.fs_file);
     res.status(200).send("Transcription started");
   } catch (error) {
     res.status(500).send("Error starting transcription");

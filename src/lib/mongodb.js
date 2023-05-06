@@ -47,6 +47,12 @@ export async function downloadFile(fileId, res) {
 
   // Create a read stream for the file you want to download
   const downloadStream = bucket.openDownloadStream(new mongodb.ObjectId(fileId));
+
+  // Check if file exists
+  const file = await db.collection('fs.files').findOne({ _id: new mongodb.ObjectId(fileId) });
+  if (!file) {
+    throw new Error('File not found');
+  }
   
   const timestamp = new Date().getTime();
 

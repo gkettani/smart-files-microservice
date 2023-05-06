@@ -1,18 +1,11 @@
 import fs from "fs";
 import express from "express";
-import amqp from 'amqplib';
 import { uploadFile, downloadFile, connectDB } from "./lib/mongodb.js";
 import upload from "./middlewares/fileUpload.js";
 import FileService from "./api/Service.js";
+import QueueService from "./lib/rabbitmq.js";
 
 connectDB();
-const QUEUE_NAME = 'files';
-const connection = await amqp.connect('amqp://localhost');
-const channel = await connection.createChannel();
-await channel.assertQueue(QUEUE_NAME, {
-  durable: false
-});
-
 
 const app = express();
 app.use(express.json());
@@ -29,17 +22,20 @@ app.post("/create-example", (req, res) => {
 });
 
 /**
- * @route GET /example
- * @desc Example route
+ * @desc List all files
  */
 app.get("/", async (req, res) => {
-  const files = await FileService.list();
-  res.json(files);
+  try {
+    const files = await FileService.list();
+    res.status(200).json(files);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Error listing files");
+  }
 });
 
 /**
- * @route POST /upload
- * @desc Uploads file to DB
+ * @desc Uploads fs.file to DB and creates a new file associated with it 
  */
 app.post("/upload", upload.single("file"), async (req, res) => {
   const filename = req.file.originalname;
@@ -69,8 +65,8 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 });
 
 /**
- * @route get /download/:id
- * @desc Download file from DB
+ * @desc Downloads file from DB
+ * @param {string} id - The id of the fs.file to download
  */
 app.get("/download/:id", async (req, res) => {
   const fileId = req.params.id;
@@ -82,11 +78,23 @@ app.get("/download/:id", async (req, res) => {
   }
 });
 
+/**
+ * @desc Send notification to transcription service
+ * @param {string} id - The id of the fs.file to transcribe
+ */
 app.post("/transcribe/:id", async (req, res) => {
-  channel.sendToQueue(QUEUE_NAME, Buffer.from(`${req.params.id}`));
-  res.status(200).send("Transcription started");
+  try {
+    await QueueService.sendToQueue(req.params.id);
+    res.status(200).send("Transcription started");
+  } catch (error) {
+    res.status(500).send("Error starting transcription");
+  }
 });
 
+/**
+ * @desc Read a file from DB
+ * @param {string} id - The id of the file to read
+ */
 app.get("/:id", async (req, res) => {
   const fileId = req.params.id;
   try {
@@ -94,7 +102,7 @@ app.get("/:id", async (req, res) => {
     res.status(200).json(file);
   } catch (error) {
     console.log(error);
-    res.send("Error downloading file");
+    res.status(500).send("Error reading file");
   }
 });
 

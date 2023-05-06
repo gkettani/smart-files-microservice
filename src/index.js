@@ -39,10 +39,11 @@ app.get("/", async (req, res) => {
  * @desc Uploads fs.file to DB and creates a new file associated with it 
  */
 app.post("/upload", upload.single("file"), async (req, res) => {
-  const filename = req.file.originalname;
-  const filepath = req.file.path;
-
-  try {
+  const filename = req.file?.originalname;
+  const filepath = req.file?.path;
+  if (!filename && !filepath) return res.status(400).send("No file transmitted");
+  
+  try{
     const fs_file = await uploadFile(filepath, filename);
     // Create a new file
     const file = await FileService.create({

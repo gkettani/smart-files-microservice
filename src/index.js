@@ -107,13 +107,13 @@ app.post("/resume/:id", async (req, res) => {
   try {
     const file = await FileService.read(req.params.id);
     if (!file) {
-      res.status(404).send("File not found");
+      res.status(404).send("transcription not found");
       return;
     }
-    await QueueService.sendToQueue(file.fs_file);
+    await QueueService.sendToQueue(file);
     res.status(200).send("resume started");
   } catch (error) {
-    res.status(500).send("Error starting summarizing");
+    res.status(500).send("Error starting the resume");
   }
 });
 ////////

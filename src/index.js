@@ -6,7 +6,8 @@ import FileService from "./api/Service.js";
 import QueueService from "./lib/rabbitmq.js";
 import config from "./config/config.js";
 
-connectDB();
+
+const { MONGO_URI } = config;
 
 const app = express();
 app.use(express.json());
@@ -105,12 +106,15 @@ app.post("/transcribe/:id", async (req, res) => {
  */
 app.post("/resume/:id", async (req, res) => {
   try {
-    const file = await FileService.read(req.params.id);
-    if (!file) {
+    const transcription = await FileService.read(req.params.id);
+    const note=  await NoteService.read(req.params.id);
+    // ça depend si on veut que les notes sont nécessaires ou non
+    if (!transcription ) {
       res.status(404).send("transcription not found");
       return;
     }
-    await QueueService.sendToQueue(file);
+    await QueueService.sendToQueue(transcription);
+    //await QueueService.sendToQueue(note);
     res.status(200).send("resume started");
   } catch (error) {
     res.status(500).send("Error starting the resume");

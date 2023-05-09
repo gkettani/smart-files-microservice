@@ -1,13 +1,16 @@
 import amqp from 'amqplib';
 import config from '../config/config.js';
 
-const { RABBITMQ_URI, RABBITMQ_QUEUE } = config;
+const { RABBITMQ_URI, FILE_QUEUE, SYNTHESES_QUEUE } = config;
 
 async function connect() {
   try {
     const connection = await amqp.connect(RABBITMQ_URI);
     const channel = await connection.createChannel();
-    await channel.assertQueue(RABBITMQ_QUEUE, {
+    await channel.assertQueue(FILE_QUEUE, {
+      durable: false
+    });
+    await channel.assertQueue(SYNTHESES_QUEUE, {
       durable: false
     });
     return channel;
@@ -22,10 +25,10 @@ export async function QueueService() {
   if (!channel) return null;
 
   return {
-    sendToQueue: async (message) => {
+    sendToQueue: async (queue, message) => {
       try {
-        channel.sendToQueue(RABBITMQ_QUEUE, Buffer.from(message));
-        console.log(`Message sent to ${RABBITMQ_QUEUE}`);
+        channel.sendToQueue(queue, Buffer.from(message));
+        console.log(`Message sent to ${queue}`);
       } catch (error) {
         console.error(error);
       }

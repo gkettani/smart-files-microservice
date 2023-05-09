@@ -91,10 +91,30 @@ app.post("/transcribe/:id", async (req, res) => {
       res.status(404).send("File not found");
       return;
     }
-    await QueueService.sendToQueue(file.fs_file);
+    await QueueService.sendToQueue('files', file.fs_file);
     res.status(200).send("Transcription started");
   } catch (error) {
     res.status(500).send("Error starting transcription");
+  }
+});
+
+/**
+ * @desc Send notification to transcription service
+ * @param {string} id - The id of the file to transcribe
+ */
+app.post("/synthesize/:id", async (req, res) => {
+  try {
+    const file = await FileService.read(req.params.id);
+    if (!file) {
+      res.status(404).send("File not found");
+      return;
+    }
+    await QueueService.sendToQueue('syntheses', JSON.stringify({
+      file_id: file._id,
+    }));
+    res.status(200).send("Synthsize Job started");
+  } catch (error) {
+    res.status(500).send("Error starting Synthesize Job");
   }
 });
 

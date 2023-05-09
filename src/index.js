@@ -5,9 +5,9 @@ import upload from "./middlewares/fileUpload.js";
 import FileService from "./api/Service.js";
 import QueueService from "./lib/rabbitmq.js";
 import config from "./config/config.js";
+import { errorHandler } from "./middlewares/errorMiddleware.js";
 
-
-const { MONGO_URI } = config;
+connectDB();
 
 const app = express();
 app.use(express.json());
@@ -31,8 +31,8 @@ app.get("/", async (req, res) => {
     const files = await FileService.list();
     res.status(200).json(files);
   } catch (error) {
-    // console.log(error);
-    res.status(500).send("Error listing files");
+    
+    throw new Error("Error listing files");
   }
 });
 
@@ -40,7 +40,7 @@ app.get("/", async (req, res) => {
  * @desc Uploads fs.file to DB and creates a new file associated with it 
  */
 app.post("/upload", upload.single("file"), async (req, res) => {
-  const filename = req.file?.originalname;
+  const filename = req.file?.originalname;///refract  le code on une fonction de service qui prend "req.file" comme attribut 
   const filepath = req.file?.path;
   if (!filename && !filepath) return res.status(400).send("No file transmitted");
   
@@ -56,7 +56,8 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     res.status(201).json(file);
   } catch (error) {
     console.log(error);
-    res.status(500).send("Error uploading file");
+
+    throw new Error("Error uploading file");
   } finally {
     // Delete the file from the uploads folder
     fs.unlink(filepath, (err) => {
@@ -89,38 +90,40 @@ app.post("/transcribe/:id", async (req, res) => {
   try {
     const file = await FileService.read(req.params.id);
     if (!file) {
-      res.status(404).send("File not found");
+      res.status(404);
+      throw new Error("File not found");
       return;
     }
-    await QueueService.sendToQueue(file.fs_file);
+    await QueueService.sendToQueue('files', file.fs_file);
     res.status(200).send("Transcription started");
   } catch (error) {
-    res.status(500).send("Error starting transcription");
+ 
+    throw new Error("Error starting transcription");
   }
 });
-///////////////////////////////////////
 
 /**
- * @desc Send notification to resume service
- * @param {string} id - The id of the file to resume
+ * @desc Send notification to transcription service
+ * @param {string} id - The id of the file to transcribe
  */
-app.post("/resume/:id", async (req, res) => {
+app.post("/synthesize/:id", async (req, res) => {
   try {
-    const transcription = await FileService.read(req.params.id);
-    const note=  await NoteService.read(req.params.id);
-    // ça depend si on veut que les notes sont nécessaires ou non
-    if (!transcription ) {
-      res.status(404).send("transcription not found");
+    const file = await FileService.read(req.params.id);
+    if (!file) {
+      res.status(404);
+      throw new Error("File not found");
       return;
     }
-    await QueueService.sendToQueue(transcription);
-    //await QueueService.sendToQueue(note);
-    res.status(200).send("resume started");
+    await QueueService.sendToQueue('syntheses', JSON.stringify({
+      file_id: file._id,
+    }));
+    res.status(200).send("Synthsize Job started");
   } catch (error) {
-    res.status(500).send("Error starting the resume");
+
+    throw new Error("Error starting Synthesize Job");
   }
 });
-////////
+
 /**
  * @desc Read a file from DB
  * @param {string} id - The id of the file to read
@@ -132,9 +135,12 @@ app.get("/:id", async (req, res) => {
     res.status(200).json(file);
   } catch (error) {
     console.log(error);
-    res.status(500).send("Error reading file");
+
+    throw new Error("Error reading file");
   }
 });
+
+app.use(errorHandler);
 
 const { PORT } = config;
 

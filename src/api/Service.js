@@ -1,4 +1,4 @@
-import File from './Model.js';
+import File from './Models/Files.js';
 
 async function create({ name, transcript, fs_file, mimetype }) {
   const file = new File({ name, transcript, fs_file, mimetype });

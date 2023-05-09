@@ -5,6 +5,7 @@ import upload from "./middlewares/fileUpload.js";
 import FileService from "./api/Service.js";
 import QueueService from "./lib/rabbitmq.js";
 import config from "./config/config.js";
+import { errorHandler } from "./middlewares/errorMiddleware.js";
 
 connectDB();
 
@@ -30,8 +31,8 @@ app.get("/", async (req, res) => {
     const files = await FileService.list();
     res.status(200).json(files);
   } catch (error) {
-    // console.log(error);
-    res.status(500).send("Error listing files");
+    
+    throw new Error("Error listing files");
   }
 });
 
@@ -39,7 +40,7 @@ app.get("/", async (req, res) => {
  * @desc Uploads fs.file to DB and creates a new file associated with it 
  */
 app.post("/upload", upload.single("file"), async (req, res) => {
-  const filename = req.file?.originalname;
+  const filename = req.file?.originalname;///refract  le code on une fonction de service qui prend "req.file" comme attribut 
   const filepath = req.file?.path;
   if (!filename && !filepath) return res.status(400).send("No file transmitted");
   
@@ -55,7 +56,8 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     res.status(201).json(file);
   } catch (error) {
     console.log(error);
-    res.status(500).send("Error uploading file");
+
+    throw new Error("Error uploading file");
   } finally {
     // Delete the file from the uploads folder
     fs.unlink(filepath, (err) => {
@@ -88,13 +90,37 @@ app.post("/transcribe/:id", async (req, res) => {
   try {
     const file = await FileService.read(req.params.id);
     if (!file) {
-      res.status(404).send("File not found");
+      res.status(404);
+      throw new Error("File not found");
       return;
     }
     await QueueService.sendToQueue('files', file.fs_file);
     res.status(200).send("Transcription started");
   } catch (error) {
-    res.status(500).send("Error starting transcription");
+ 
+    throw new Error("Error starting transcription");
+  }
+});
+
+/**
+ * @desc Send notification to transcription service
+ * @param {string} id - The id of the file to transcribe
+ */
+app.post("/synthesize/:id", async (req, res) => {
+  try {
+    const file = await FileService.read(req.params.id);
+    if (!file) {
+      res.status(404);
+      throw new Error("File not found");
+      return;
+    }
+    await QueueService.sendToQueue('syntheses', JSON.stringify({
+      file_id: file._id,
+    }));
+    res.status(200).send("Synthsize Job started");
+  } catch (error) {
+
+    throw new Error("Error starting Synthesize Job");
   }
 });
 
@@ -129,9 +155,12 @@ app.get("/:id", async (req, res) => {
     res.status(200).json(file);
   } catch (error) {
     console.log(error);
-    res.status(500).send("Error reading file");
+
+    throw new Error("Error reading file");
   }
 });
+
+app.use(errorHandler);
 
 const { PORT } = config;
 

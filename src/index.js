@@ -1,11 +1,10 @@
-import fs from "fs";
 import express from "express";
-import { uploadFile, downloadFile, connectDB } from "./lib/mongodb.js";
+import { downloadFile, connectDB } from "./lib/mongodb.js";
 import upload from "./middlewares/fileUpload.js";
-import FileService from "./api/Service.js";
-import QueueService from "./lib/rabbitmq.js";
+import FileService from "./api/services/fileService.js";
+import FolderService from "./api/services/folderService.js";
 import config from "./config/config.js";
-import { errorHandler } from "./middlewares/errorMiddleware.js";
+import errorHandler from "./middlewares/errorMiddleware.js";
 
 connectDB();
 
@@ -13,134 +12,36 @@ const app = express();
 app.use(express.json());
 
 /**
- * @route GET /example
- * @desc Example route
+ * Files routes ------------------------------------------
  */
-app.post("/create-example", (req, res) => {
-  const name = req.body.filename;
-  // Create a new file
-  FileService.create({ name });
-  res.send("File created successfully");
-});
 
 /**
  * @desc List all files
  */
-app.get("/", async (req, res) => {
+app.get("/files", async (req, res, next) => {
   try {
     const files = await FileService.list();
     res.status(200).json(files);
   } catch (error) {
-    
-    throw new Error("Error listing files");
+    console.log(error);
+    next(error);
   }
 });
 
 /**
- * @desc Uploads fs.file to DB and creates a new file associated with it 
+ * @desc Create a new file and upload its fs.file to DB
  */
-app.post("/upload", upload.single("file"), async (req, res) => {
-  const filename = req.file?.originalname;///refract  le code on une fonction de service qui prend "req.file" comme attribut 
-  const filepath = req.file?.path;
-  if (!filename && !filepath) return res.status(400).send("No file transmitted");
-  
-  try{
-    const fs_file = await uploadFile(filepath, filename);
-    // Create a new file
+app.post("/files", upload.single("file"), async (req, res, next) => {
+  try {
     const file = await FileService.create({
-      name: filename,
-      transcript: null,
-      fs_file: fs_file._id,
-      mimetype: req.file.mimetype,
+      // user_id: req.body.user_id,
+      file_p: req.body,
+      fs_file_p: req.file,
     });
     res.status(201).json(file);
   } catch (error) {
     console.log(error);
-
-    throw new Error("Error uploading file");
-  } finally {
-    // Delete the file from the uploads folder
-    fs.unlink(filepath, (err) => {
-      if (err) {
-        console.log(err);
-      }
-    });
-  }
-});
-
-/**
- * @desc Downloads file from DB
- * @param {string} id - The id of the fs.file to download
- */
-app.get("/download/:id", async (req, res) => {
-  const fileId = req.params.id;
-  try {
-    await downloadFile(fileId, res);
-  } catch (error) {
-    console.log(error);
-    res.send("Error downloading file");
-  }
-});
-
-/**
- * @desc Send notification to transcription service
- * @param {string} id - The id of the file to transcribe
- */
-app.post("/transcribe/:id", async (req, res) => {
-  try {
-    const file = await FileService.read(req.params.id);
-    if (!file) {
-      res.status(404);
-      throw new Error("File not found");
-      return;
-    }
-    await QueueService.sendToQueue('files', file.fs_file);
-    res.status(200).send("Transcription started");
-  } catch (error) {
- 
-    throw new Error("Error starting transcription");
-  }
-});
-
-/**
- * @desc Send notification to transcription service
- * @param {string} id - The id of the file to transcribe
- */
-app.post("/synthesize/:id", async (req, res) => {
-  try {
-    const file = await FileService.read(req.params.id);
-    if (!file) {
-      res.status(404);
-      throw new Error("File not found");
-      return;
-    }
-    await QueueService.sendToQueue('syntheses', JSON.stringify({
-      file_id: file._id,
-    }));
-    res.status(200).send("Synthsize Job started");
-  } catch (error) {
-
-    throw new Error("Error starting Synthesize Job");
-  }
-});
-
-/**
- * @desc Send notification to transcription service
- * @param {string} id - The id of the file to transcribe
- */
-app.post("/synthesize/:id", async (req, res) => {
-  try {
-    const file = await FileService.read(req.params.id);
-    if (!file) {
-      res.status(404).send("File not found");
-      return;
-    }
-    await QueueService.sendToQueue('syntheses', JSON.stringify({
-      file_id: file._id,
-    }));
-    res.status(200).send("Synthsize Job started");
-  } catch (error) {
-    res.status(500).send("Error starting Synthesize Job");
+    next(error);
   }
 });
 
@@ -148,15 +49,144 @@ app.post("/synthesize/:id", async (req, res) => {
  * @desc Read a file from DB
  * @param {string} id - The id of the file to read
  */
-app.get("/:id", async (req, res) => {
-  const fileId = req.params.id;
+app.get("/files/:id", async (req, res, next) => {
   try {
-    const file = await FileService.read(fileId);
+    const file = await FileService.read(req.params.id);
     res.status(200).json(file);
   } catch (error) {
     console.log(error);
+    next(error);
+  }
+});
 
-    throw new Error("Error reading file");
+/**
+ * @desc Delete a file from DB
+ */
+app.delete("/files/:id", async (req, res, next) => {
+  try {
+    const file = await FileService.remove(req.params.id);
+    res.status(200).json(file);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+
+/**
+ * @desc Update a file
+ */
+app.put("/files/:id", async (req, res, next) => {
+  try {
+    const file = await FileService.update(req.params.id, req.body);
+    res.status(200).json(file);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+
+/**
+ * @desc Send notification to transcription service
+ * @param {string} id - The id of the file to transcribe
+ */
+app.post("/files/:id/transcribe", async (req, res, next) => {
+  try {
+    await FileService.transcribe(req.params.id);
+    res.status(200).send("Transcription started");
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+
+/**
+ * @desc Send notification to synthesis service
+ * @param {string} id - The id of the file to synthesize
+ */
+app.post("/files/:id/synthesize", async (req, res, next) => {
+  try {
+    await FileService.synthesize(req.params.id);
+    res.status(200).send("Synthesize started");
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+
+/**
+ * End of Files routes ------------------------------------------
+ */
+
+
+/**
+ * Syntheses routes ------------------------------------------
+ */
+
+/**
+ * End of Syntheses routes ------------------------------------------
+ */
+
+
+/**
+ * Folders routes ------------------------------------------
+ */
+
+/**
+ * @desc Create a new folder
+ */
+app.post("/folders", async (req, res, next) => {
+  try {
+    const folder = await FolderService.create(null, req.body.name);
+    res.status(201).json(folder);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+
+/**
+ * @desc List all folders
+ */
+app.get("/folders", async (req, res, next) => {
+  try {
+    const folders = await FolderService.list();
+    res.status(200).json(folders);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+
+/**
+ * @desc List files of a folder
+ */
+app.get("/folders/:id/files", async (req, res, next) => {
+  try {
+    const files = await FileService.list({ folder_id: req.params.id });
+    res.status(200).json(files);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+ 
+
+/**
+ * End of Folders routes ------------------------------------------
+ */
+
+
+/**
+ * @desc Downloads file from DB
+ * @param {string} id - The id of the fs.file to download
+ */
+app.get("/download/:id", async (req, res, next) => {
+  const fileId = req.params.id;
+  try {
+    await downloadFile(fileId, res);
+  } catch (error) {
+    console.log(error);
+    next(error);
   }
 });
 

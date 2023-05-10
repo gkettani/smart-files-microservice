@@ -1,10 +1,16 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model } from "mongoose";
 
 const SynthesesSchema = new Schema({
-    titles: String,
+    title: String,
     text: String,
-    isPublic: Boolean
-    });
+    isPublic: Boolean,
+    quizz: String,
+    tags: [String],
+    embeddings: Array,
+    recommendations: Array,
+},
+{
+    timestamps: true,
+});
 
-
-export default model('Syntheses', SynthesesSchema);
+export default model("Syntheses", SynthesesSchema);

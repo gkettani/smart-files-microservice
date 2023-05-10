@@ -169,6 +169,19 @@ app.get("/folders/:id/files", async (req, res, next) => {
     next(error);
   }
 });
+
+/**
+ * @desc Read folder by id
+ */
+app.get("/folders/:id", async (req, res, next) => {
+  try {
+    const folder = await FolderService.read(req.params.id);
+    res.status(200).json(folder);
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+})
  
 
 /**

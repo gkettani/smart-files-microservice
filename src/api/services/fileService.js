@@ -73,7 +73,7 @@ const synthesize = async (file_id) => {
   }
 
   try {
-    await QueueService.sendToQueue('syntheses', file.fs_file_id);
+    await QueueService.sendToQueue('syntheses', { file_id });
   } catch (error) {
     throw new Error("Error starting synthesis");
   }

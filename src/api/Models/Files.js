@@ -6,12 +6,15 @@ const FileSchema = new Schema({
     required: true,
   },
   description: String,
-  transcript: String,
+  transcript_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'Transcript',
+  },
   notes: String,
   user_id: {
     type: String,
-    // unique: true,
-    // required: true,
+    unique: true,
+    required: true,
   },
   mimetype: String,
   fs_file_id: {
@@ -20,12 +23,11 @@ const FileSchema = new Schema({
     },
   synthesis_id: {
     type: Schema.Types.ObjectId,
-    ref: 'Syntheses',
+    ref: 'Synthesis',
   },
   folder_id: {
     type: Schema.Types.ObjectId,
     ref: 'Folder',
-    required: true,
   }
 },{
   timestamps: true,

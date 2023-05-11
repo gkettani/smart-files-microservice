@@ -11,18 +11,6 @@ const list = async (params) => {
   return SynthesisRepository.list(params);
 }
 
-const create = async (synthesis) => {
-  return SynthesisRepository.create(synthesis) ;
-}
-
-const remove = async (id) => {
-  const synthesis = await SynthesisRepository.read(id);
-  if (!synthesis) {
-    throw new NotFoundError("Synthesis not found");
-  }
-  return SynthesisRepository.remove(id);
-}
-
 const read = async (id) => {
   const synthesis = await SynthesisRepository.read(id);
   if (!synthesis) {
@@ -31,18 +19,21 @@ const read = async (id) => {
   return synthesis;
 }
 
-const update = async (id, synthesis) => {
-  const synthesis = await SynthesisRepository.read(id);
+const update = async (id, data) => {
+  const synthesis = await SynthesisRepository.update(id, data);
   if (!synthesis) {
-    throw new NotFoundError("synthesis not found");
+    throw new NotFoundError("Synthesis not found");
   }
-  return SynthesisRepository.update(id, file);
+  return synthesis;
+}
+
+
+const listPublic = async () => {
+  return SynthesisRepository.list({ isPublic: true });
 }
 
 export default {
   list,
-  create,
-  remove,
   read,
-  update
+  listPublic
 };

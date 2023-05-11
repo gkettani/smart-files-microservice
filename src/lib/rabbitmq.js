@@ -30,7 +30,7 @@ export async function QueueService() {
         channel.sendToQueue(queue, Buffer.from(message));
         console.log(`Message sent to ${queue}`);
       } catch (error) {
-        console.error(error);
+        throw new Error(`Error sending message to ${queue}`);
       }
     }
   }

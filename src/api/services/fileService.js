@@ -44,7 +44,7 @@ const create = async ({ user_id, file_p, fs_file_p }) => {
       mimetype: fs_file_p.mimetype,
       notes: file_p.notes,
       folder_id: file_p.folder_id,
-      // user_id,
+      user_id,
     });
   } catch (error) {
     console.log(error);
@@ -60,20 +60,21 @@ const transcribe = async (file_id) => {
     throw new NotFoundError("File not found");
   }
   try {
-    await QueueService.sendToQueue('files', file.fs_file_id);
+    await QueueService.sendToQueue('files', file_id);
   } catch (error) {
     throw new Error("Error starting transcription");
   }
 }
 
 const synthesize = async (file_id) => {
+  console.log(file_id);
   const file = await FileRepository.read(file_id);
   if (!file) {
     throw new NotFoundError("File not found");
   }
 
   try {
-    await QueueService.sendToQueue('syntheses', { file_id });
+    await QueueService.sendToQueue('syntheses', JSON.stringify({ file_id }));
   } catch (error) {
     throw new Error("Error starting synthesis");
   }

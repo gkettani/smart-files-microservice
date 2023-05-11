@@ -31,18 +31,9 @@ const read = async (id) => {
   return folder;
 }
 
-const update = async (id, folder) => {
-  const folder = await FolderRepository.read(id);
-  if (!folder) {
-    throw new NotFoundError("Folder not found");
-  }
-  return FolderRepository.update(id, file);
-}
-
 export default {
   list,
   create,
   remove,
-  read,
-  update
+  read
 };

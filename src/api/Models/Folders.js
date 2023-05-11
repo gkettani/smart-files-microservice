@@ -4,8 +4,8 @@ const FolderSchema = new Schema({
   name: String,
   user_id: {
     type: String,
-    // unique: true,
-    // required: true,
+    unique: true,
+    required: true,
   }
 }, {
   timestamps: true,

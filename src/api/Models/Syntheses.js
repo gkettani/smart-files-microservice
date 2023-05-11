@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 
-const SynthesesSchema = new Schema({
+const SynthesisSchema = new Schema({
     title: String,
     text: String,
     isPublic: Boolean,
@@ -13,4 +13,4 @@ const SynthesesSchema = new Schema({
     timestamps: true,
 });
 
-export default model("Syntheses", SynthesesSchema);
+export default model("Synthesis", SynthesisSchema);

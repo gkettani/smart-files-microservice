@@ -1,28 +1,12 @@
 import Synthesis from '../models/Syntheses.js';
 
 /**
- * List all syntheses for a user
- * @param {String} userId - User id
- * @returns {Promise<Synthesis[]>}
+ * List all syntheses by passing params
+ * @param {Object} params - Query params i.e. { user_id }
+ * @returns {Promise<Folder[]>}
  */
-// const list = async (userId) => {
-//   return Synthesis.find({ user: userId }).select('-__v -user_id');
-// };
-
-const list = async () => {
-  return Synthesis.find().select('-__v');
-};
-
-/**
- * Create and save a new synthesis
- * @returns {Promise<Synthesis>}
- */
-const create = async (synthesis) => {
-  return Synthesis(synthesis).save();
-};
-
-const remove = async (id) => {
-  return Synthesis.findByIdAndDelete(id);
+const list = async (...params) => {
+  return Synthesis.find(...params).select('-__v -user_id');
 };
 
 const read = async (id) => {
@@ -31,7 +15,7 @@ const read = async (id) => {
 
 /**
  * Update a synthesis & return the updated synthesis
- * @returns {Promise<Synthesis>}
+ * @returns {Promise<File>}
  */
 const update = async (id, synthesis) => {
   return Synthesis.findByIdAndUpdate(id, synthesis, { new: true });
@@ -39,8 +23,5 @@ const update = async (id, synthesis) => {
 
 export default {
   list,
-  create,
-  remove,
   read,
-  update,
 };

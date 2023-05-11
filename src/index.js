@@ -3,6 +3,8 @@ import { downloadFile, connectDB } from "./lib/mongodb.js";
 import upload from "./middlewares/fileUpload.js";
 import FileService from "./api/services/fileService.js";
 import FolderService from "./api/services/folderService.js";
+import TranscryptService from "./api/services/transcryptService.js";
+import SynthesisService from "./api/services/synthesisService.js";
 import config from "./config/config.js";
 import errorHandler from "./middlewares/errorMiddleware.js";
 
@@ -123,8 +125,100 @@ app.post("/files/:id/synthesize", async (req, res, next) => {
  */
 
 /**
+ * @desc Create a new Synthesis
+ */
+app.post("/synthesis", async (req, res, next) => {
+  try {
+    const synthesis = await SynthesisService.create(null, req.body.name);
+    res.status(201).json(synthesis);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+
+/**
+ * @desc List all Synthesis
+ */
+app.get("/synthesis", async (req, res, next) => {
+  try {
+    const synthesis = await SynthesisService.list();
+    res.status(200).json(synthesis);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+
+
+
+/**
+ * @desc Read a Synthesis by id
+ */
+app.get("/synthesis/:id", async (req, res, next) => {
+  try {
+    const synthesis = await SynthesisService.read(req.params.id);
+    res.status(200).json(synthesis);
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+})
+ 
+
+/**
  * End of Syntheses routes ------------------------------------------
  */
+
+
+
+/**
+ * Transcrypts routes ------------------------------------------
+ */
+
+/**
+ * @desc Create a new Transcrypts
+ */
+app.post("/transcrypts", async (req, res, next) => {
+  try {
+    const transcrypt = await TranscryptService.create(null, req.body.name);
+    res.status(201).json(transcrypt);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+
+/**
+ * @desc List all Transcrypts
+ */
+app.get("/transcrypts", async (req, res, next) => {
+  try {
+    const transcrypt = await TranscryptService.list();
+    res.status(200).json(transcrypt);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+});
+
+/**
+ * @desc Read a Transcrypts by id
+ */
+app.get("/transcrypts/:id", async (req, res, next) => {
+  try {
+    const transcrypt = await TranscryptService.read(req.params.id);
+    res.status(200).json(transcrypt);
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+})
+ 
+/**
+ * End of Transcrypts routes ------------------------------------------
+ */
+
 
 
 /**

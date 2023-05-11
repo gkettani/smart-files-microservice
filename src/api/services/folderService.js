@@ -1,21 +1,48 @@
-import Folder from '../models/Folders.js';
+import FolderRepository from "../repositories/folderRepository.js";
+import BadRequestError from "../../config/errors/BadRequestError.js";
+import NotFoundError from "../../config/errors/NotFoundError.js";
 
-async function create(user_id, name) {
-  const folder = new Folder({ name, user_id });
-  const newfolder = await folder.save();
-  return newfolder;
+
+/**
+ * List all folders by passing params
+ * @param {Object} params - Query params i.e. { user_id, folder_id }
+ */
+const list = async (params) => {
+  return FolderRepository.list(params);
 }
 
-function read(id) {
-  return Folder.findById(id);
+const create = async (folder) => {
+  return FolderRepository.create(folder) ;
 }
 
-function list() {
-  return Folder.find();
+const remove = async (id) => {
+  const folder = await FolderRepository.read(id);
+  if (!folder) {
+    throw new NotFoundError("Folder not found");
+  }
+  return FolderRepository.remove(id);
+}
+
+const read = async (id) => {
+  const folder = await FolderRepository.read(id);
+  if (!folder) {
+    throw new NotFoundError("Folder not found");
+  }
+  return folder;
+}
+
+const update = async (id, folder) => {
+  const folder = await FolderRepository.read(id);
+  if (!folder) {
+    throw new NotFoundError("Folder not found");
+  }
+  return FolderRepository.update(id, file);
 }
 
 export default {
-  create,
   list,
+  create,
+  remove,
   read,
+  update
 };

@@ -200,7 +200,7 @@ app.put("/syntheses/:id", async (req, res, next) => {
  */
 app.get("/files/:id/transcript", async (req, res, next) => {
   try {
-    const transcript = await TranscriptService.read(req.params.id);
+    const transcript = await TranscriptService.readByFileId(req.params.id);
     res.status(200).json(transcript);
   } catch (err) {
     console.log(err);

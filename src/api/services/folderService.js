@@ -11,7 +11,11 @@ const list = async (params) => {
   return FolderRepository.list(params);
 }
 
-const create = async (folder) => {
+const create = async (userId, name) => {
+  const folder = {
+    user_id: userId,
+    name
+  };
   return FolderRepository.create(folder) ;
 }
 

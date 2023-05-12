@@ -24,4 +24,5 @@ const update = async (id, synthesis) => {
 export default {
   list,
   read,
+  update
 };

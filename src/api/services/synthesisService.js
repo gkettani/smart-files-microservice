@@ -19,10 +19,10 @@ const read = async (id) => {
   return synthesis;
 }
 
-const update = async (id, data) => {
-  const synthesis = await SynthesisRepository.update(id, data);
+const update = async (id) => {
+  const synthesis = await SynthesisRepository.update(id, { isPublic: true });
   if (!synthesis) {
-    throw new NotFoundError("Synthesis not found");
+    throw new BadRequestError("Unable to update synthesis");
   }
   return synthesis;
 }
@@ -35,5 +35,6 @@ const listPublic = async () => {
 export default {
   list,
   read,
-  listPublic
+  listPublic,
+  update
 };

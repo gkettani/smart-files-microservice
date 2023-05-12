@@ -176,7 +176,8 @@ app.get("/syntheses/:id", async (req, res, next) => {
  */
 app.put("/syntheses/:id", async (req, res, next) => {
   try {
-    const synthesis = await SynthesisService.update(req.params.id, req.body);
+    // Set isPublic to true
+    const synthesis = await SynthesisService.update(req.params.id);
     res.status(200).json(synthesis);
   } catch (err) {
     console.log(err);
